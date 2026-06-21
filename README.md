@@ -22,7 +22,7 @@ The engine successfully parsed and aggregated **5,000,000 rows** of simulated hi
 | **Throughput** | **9.84 Million rows / second** |
 | **Peak Memory Footprint** | < 15 MB |
 
-*Note: The VWAP calculation dynamically updates in $O(1)$ time per tick without needing to store individual historical trades in memory.*
+*Note: The VWAP calculation dynamically updates in* $O(1)$ *time per tick without needing to store individual historical trades in memory.*
 
 ## Project Structure
 ```text
