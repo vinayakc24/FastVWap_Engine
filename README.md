@@ -3,9 +3,7 @@
 A low-latency C++17 market data parser designed to aggregate Volume Weighted Average Price (VWAP) across massive historical tick datasets.
 
 ## Overview
-Quantitative trading firms rely heavily on analyzing massive datasets (often tens of gigabytes of CSV tick data). Standard parsing libraries in Python (Pandas) or naive C++ approaches (like `std::stringstream`) often bottleneck on memory allocations and CPU overhead.
-
-This engine is built to process millions of rows of comma-separated market data in fractions of a second by eliminating heap allocations during the critical parsing phase.
+Parsing large CSV files (millions of rows) using standard C++ streams (`std::stringstream`) or Python often bottlenecks on memory allocation and string copying. This engine is built to process millions of rows of comma-separated market data in fractions of a second by eliminating heap allocations during the critical parsing phase.
 
 ## Core Engineering Focus
 * **Zero-Copy Tokenization:** Utilizes C++17 `std::string_view` to slice incoming text streams without copying string buffers or triggering `malloc`/`new`.
