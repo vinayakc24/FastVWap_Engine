@@ -11,15 +11,15 @@ Parsing large CSV files (millions of rows) using standard C++ streams (`std::str
 * **$O(1)$ State Aggregation:** Maintains running mathematical totals for unique ticker symbols simultaneously using `std::unordered_map`, keeping the memory footprint flat regardless of the dataset size.
 
 ## Performance Benchmarks
-Tested on a standard Windows machine compiling with GCC (O3 optimization). 
-
-The engine successfully parsed and aggregated **5,000,000 rows** of simulated historical trade records (approx. 150MB of text data).
+## Performance Benchmarks
+Tested on a standard Windows laptop compiling with GCC (`-O3` optimization). 
+Successfully parsed and aggregated **5,000,000 rows** (~150MB CSV).
 
 | Metric | Result |
 | :--- | :--- |
 | **Total Rows Processed** | 5,000,000 |
-| **Wall-Clock Time** | 0.5079 seconds |
-| **Throughput** | **9.84 Million rows / second** |
+| **Wall-Clock Time** | ~1.15s |
+| **Throughput** | **~4.3M rows / second** |
 | **Peak Memory Footprint** | < 15 MB |
 
 Note: The VWAP calculation dynamically updates in $O(1)$ time per tick without needing to store individual historical trades in memory.
