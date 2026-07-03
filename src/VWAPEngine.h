@@ -3,32 +3,25 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <deque>
+#include <utility>
 
 class VWAPEngine {
 private:
-    // Hash map providing O(1) average time complexity for updating metrics.
-    // The key is the Ticker Symbol (e.g., "AAPL"), the value is the running math.
-    std::unordered_map<std::string, VWAPMetric> metrics;
+    // Hot-path index: Maps a zero-copy string_view directly to the storage index.
+    std::unordered_map<std::string_view, size_t> tickerIndex;
+
+    // Stable storage: Owns the actual std::string keys and VWAP math.
+    // std::deque is required here because push_back/emplace_back guarantees
+    // that memory addresses of existing elements are never invalidated/moved.
+    std::deque<std::pair<std::string, VWAPMetric>> tickerStore;
 
 public:
     VWAPEngine() = default;
 
-    /**
-     * @brief Opens the CSV and orchestrates the parsing loop.
-     * @param filepath Path to the historical tick data.
-     * @return true if successful, false if the file cannot be opened.
-     */
     bool processCSV(const std::string& filepath);
-    
-    /**
-     * @brief Outputs the final aggregated VWAP for all processed symbols.
-     */
     void printResults() const;
 
 private:
-    /**
-     * @brief The critical path function. Parses a single line of CSV.
-     * Takes a string_view to prevent copying the string payload.
-     */
     void processLine(std::string_view line);
 };

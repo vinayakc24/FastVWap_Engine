@@ -58,14 +58,28 @@ void VWAPEngine::processLine(std::string_view line) {
     uint64_t volume = 0;
     std::from_chars(volumeView.data(), volumeView.data() + volumeView.size(), volume);
 
-    // Step 4: State Aggregation
-    // We instantiate a std::string from the view to use as the hash map key.
-    std::string ticker(tickerView);
-    
-    // Fetch the metric struct (or default initialize it if it doesn't exist yet)
-    auto& metric = metrics[ticker];
-    
+    // Step 4: State Aggregation (true zero-copy on the hot path)
+    // Look up the ticker using the transient string_view straight from the
+    // line buffer. Because tickerIndex is keyed by string_view, this is a
+    // pure hash + compare -- no std::string is constructed here, so a
+    // repeated ticker (the overwhelming majority of rows) touches the heap
+    // zero times.
+    size_t idx;
+    if (auto it = tickerIndex.find(tickerView); it != tickerIndex.end()) {
+        idx = it->second;
+    } else {
+        // Cold path: runs once per UNIQUE ticker symbol, not once per row.
+        // tickerStore is a std::deque, so this emplace_back never
+        // invalidates the string_view we're about to hand to tickerIndex.
+        tickerStore.emplace_back(std::string(tickerView), VWAPMetric{});
+        idx = tickerStore.size() - 1;
+        // Re-point the index at the STABLE string just stored in
+        // tickerStore, not the transient `line` buffer that owns tickerView.
+        tickerIndex.emplace(std::string_view(tickerStore[idx].first), idx);
+    }
+
     // VWAP Math: Add the dollar value of this specific trade, and add the volume
+    auto& metric = tickerStore[idx].second;
     metric.cumulativeValue += (price * volume);
     metric.cumulativeVolume += volume;
 }
@@ -77,7 +91,7 @@ void VWAPEngine::printResults() const {
               << "VWAP\n";
     std::cout << "--------------------------------------\n";
     
-    for (const auto& [ticker, metric] : metrics) {
+    for (const auto& [ticker, metric] : tickerStore) {
         std::cout << std::left << std::setw(10) << ticker 
                   << std::setw(15) << metric.cumulativeVolume 
                   << "$" << std::fixed << std::setprecision(4) << metric.getVWAP() << "\n";
